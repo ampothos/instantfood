@@ -49,3 +49,4 @@ Created the tables within the database, and functions to create new tables and m
 Created foodfuncs.py, which contains the functions stocklist(), a function that turns the text file of food stock into a list, and pickrecipe(), which chooses a random recipe from the database and ensures that all the ingredients are in stock.
 
 Created the sqlite database where the recipes will be stored.
+
