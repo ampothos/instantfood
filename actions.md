@@ -4,8 +4,11 @@ Local program for favorite recipes
 
 ### Functionality:
 
-    -Easily insert recipe, ingredients, description and amounts
-    - Load in a new text file of stock every time? or have one to modify?
+    - Scrap your whole database, and start a new one.
+    - Rework your functions so they are more specific and multipurpose
+    - Scrap reclist and inglist for now
+        - if I end up using pandas dataframe, pass in file name instead of hard coding every time, or use global variable
+    - merge inserts
 
 # Log
 

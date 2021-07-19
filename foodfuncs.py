@@ -1,42 +1,39 @@
 import random
 import sqlite3
 from sqlite3 import Error
-# holds ordered list of all recipe names, checked by is_recipe_duplicate
-reclist = []
-# holds ordered list of all ingredients, checked by is_ingredient_duplicate 
-inglist = []
 
-def reclist_add(id, name):
-    """input: int id, string name
-        output: writes id and recipe to the reclist file for checking to reduce query volume"""
-    # keeps track of current recipes in db to reduce query volume, used in insert_recipe
-    file = open("reclist.txt", "a")
-    towrite = "\n" + str(id) + ", " + name 
-    file.write(towrite)
-    file.close()
 
-def inglist_add(ingredients):
-    # WORKS
-    """input: list of tuples (id, name)
-    output: writes ids and ingredients to the inglist file for checking and query volume reduction"""
-    file = open("inglist.txt", "a")
-    for ing in ingredients:
-        towrite = "\n" + str(ing[0]) + ", " + ing[1]
-        file.write(towrite)
-    file.close()
+# def reclist_add(id, name):
+#     """input: int id, string name
+#         output: writes id and recipe to the reclist file for checking to reduce query volume"""
+#     # keeps track of current recipes in db to reduce query volume, used in insert_recipe
+#     file = open("reclist.txt", "a")
+#     towrite = "\n" + str(id) + ", " + name 
+#     file.write(towrite)
+#     file.close()
 
-def stocklist(pantryfile):
+# def inglist_add(ingredients):
+#     # WORKS
+#     """input: list of tuples (id, name)
+#     output: writes ids and ingredients to the inglist file for checking and query volume reduction"""
+#     file = open("inglist.txt", "a")
+#     for ing in ingredients:
+#         towrite = "\n" + str(ing[0]) + ", " + ing[1]
+#         file.write(towrite)
+#     file.close()
+
+def stocklist():
     """
     Input: a .txt of the food stock available
     Output: an iterable list of foods available 
     """
-    file = open(pantryfile)
+    file = open("stock.txt")
     foods = file.read().split("\n")
     file.close()
 
     return foods
 
-def pickrecipe ():
+def pickrecipe():
     """
     Input: none
     Finds the highest recipe id number, and randint picks within the range 1 - max 
@@ -79,16 +76,14 @@ def pickrecipe ():
 
     # return pick 
 
-def create_connection(db_file):
-    """ create a database connection to the SQLite database
-        specified by db_file
-    :param db_file: database file
+def create_connection():
+    """ create a database connection to the SQLite database recipes.db
     :return: Connection object or None
     """
     conn = None
     try:
         # waits for max of 30 seconds before closing the db to account for large recipes
-        conn = sqlite3.connect(db_file, timeout=30.0)
+        conn = sqlite3.connect("recipes.db")
         return conn
     except Error as e:
         print(e)
@@ -96,76 +91,77 @@ def create_connection(db_file):
     return conn
 
 
-def create_table(conn, create_table_sql):
-    """ create a table from the create_table_sql statement
-    :param conn: Connection object
-    :param create_table_sql: a CREATE TABLE statement
-    :return:
+def execute_query(sql_query):
+    """execute a query without passed in parameters
+    :param create_table_sql: a sql query 
     """
     try:
+        conn = create_connection()
         c = conn.cursor()
-        c.execute(create_table_sql)
+        c.execute(sql_query)
         c.close()
+        conn.close()
+    except Error as e:
+        print(e)
+
+def create_tables():
+    # WORKS
+    """ 
+    Uses the execute_query function and the create_connection function
+    to connect and create the initial tables. 
+    """
+    create_recipe_table = """CREATE TABLE recipes 
+                                (recipe_id INTEGER PRIMARY KEY NOT NULL,
+                                recipe_name TEXT, 
+                                instructions_id INTEGER, 
+                                difficulty_id INTEGER,
+                                FOREIGN KEY (instructions_id) REFERENCES instructions(instructions_id) ON DELETE CASCADE,
+                                FOREIGN KEY (difficulty_id) REFERENCES difficulty(difficulty_id) ON DELETE CASCADE
+                                );"""
+    create_instructions_table = """CREATE TABLE instructions
+                                (instructions_id INTEGER PRIMARY KEY NOT NULL, 
+                                instructions TEXT NOT NULL
+                                );"""
+    create_difficulty_table = """CREATE TABLE difficulty
+                                (difficulty_id INTEGER PRIMARY KEY NOT NULL,
+                                difficulty TEXT NOT NULL
+                                );"""
+    create_rec_ing_quan_table = """CREATE TABLE rec_ing_quan
+                                    (recipe_id INTEGER, 
+                                    ingredient_id INTEGER,
+                                    quantity TEXT,
+                                    FOREIGN KEY (recipe_id) REFERENCES recipes(recipe_id) ON DELETE CASCADE,
+                                    FOREIGN KEY (ingredient_id) REFERENCES ingredients(ingredient_id) ON DELETE CASCADE
+                                    );"""
+    create_ingredients_table = """CREATE TABLE ingredients
+                                    (ingredient_id INTEGER PRIMARY KEY NOT NULL,
+                                    ingredient_name TEXT NOT NULL
+                                    );"""
+    create_table_queries = [create_difficulty_table, create_instructions_table, 
+                            create_ingredients_table, create_recipe_table, 
+                            create_rec_ing_quan_table]
+
+    try:
+        for query in create_table_queries:
+            execute_query(query)
     except Error as e:
         print(e)
 
 
-def full_create_tables():
-    """ 
-    Uses the create_table function and the create_connection function
-    to connect and create the initial tables. 
-    """
-    database = r"recipes.db"
-
-    sql_create_recipe_table = """CREATE TABLE recipes 
-                                (id INTEGER PRIMARY KEY NOT NULL, 
-                                recipe_name TEXT NOT NULL, 
-                                instructions TEXT);
-                                """
-    sql_create_ingredients_table = """ CREATE TABLE ingredients
-                                    (id INTEGER PRIMARY KEY NOT NULL, 
-                                    ingredient_name TEXT NOT NULL
-                                    );"""
-
-    sql_create_ingrecipe_table = """CREATE TABLE ingrecipe
-                                (recipe_id INTEGER NOT NULL,
-                                ingredient_id INTEGER NOT NULL, 
-                                quantity TEXT,
-                                FOREIGN KEY (recipe_id) REFERENCES recipes (id) ON DELETE CASCADE,
-                                FOREIGN KEY (ingredient_id) REFERENCES ingredients (id) ON DELETE CASCADE
-                                );"""
- # create a database connection
-    conn = create_connection(database)
-
-    # create tables
-    if conn is not None:
-        # create recipe table
-        create_table(conn, sql_create_recipe_table)
-
-        # create ingredients table
-        create_table(conn, sql_create_ingredients_table)
-
-        # create ingrecipe table
-        create_table(conn, sql_create_ingrecipe_table)
-
-        conn.close()
-    else:
-        print("Error! cannot create the database connection.")
-
-def find_ingredient_id(name):
-   # WORKS
-    """input: ingredient name
-        output: integer id of the ingredient in ingredient table, if doesn't
-        exist, False
-    """
-    file = open("inglist.txt")
-    ingredients = file.read().split("\n")
-    file.close()
-    for item in ingredients: 
-        n = item.split(", ")
-        if n[1] == name:
-            return int(n[0])
-    return False
+# def find_ingredient_id(name):
+#    # query DB or use CSV
+#     """input: ingredient name
+#         output: integer id of the ingredient in ingredient table, if doesn't
+#         exist, False
+#     """
+#     file = open("inglist.txt")
+#     ingredients = file.read().split("\n")
+#     file.close()
+#     for item in ingredients: 
+#         n = item.split(", ")
+#         if n[1] == name:
+#             return int(n[0])
+    # return False
     
 
     # try:
@@ -182,84 +178,96 @@ def find_ingredient_id(name):
     #         conn.close()
     #         print("the connection is closed.")
 
-def insert_recipe(recipe):
+def insert_recipe(recipe, instructions, ingredients_quantities):
     """
-    input: a tuple (id, recipe_name, instructions)
-    output: populates the recipes db with 1 recipe
+    param recipe: string name
+    param instructions: string instructions
+    param ingredients_quantities: dictionary of strings ingredient : quantity 
+    output: populates the recipes db and ing_rec_quan with 1 full recipe
     """
-    
+    # RESTRUCTURE THIS WHOLE THING
     try:
-        conn = create_connection("recipes.db")
-        cur = conn.cursor()
-        # Inserts one row of recipe by command, then 
-        recipe_query = """ INSERT INTO recipes 
-                            (id, recipe_name, instructions)
-                            VALUES 
-                            (?, ?, ?);"""
-        
-        cur.execute(recipe_query, recipe)
-        conn.commit() 
-        print(f"{recipe[1]} recipe inserted successfully")
-        cur.close()
-        if conn:
-            conn.close()
-            print("the connection is closed.")
-            # adds the new recipe to the reclist 
-            reclist_add(recipe[0], recipe[1])
-    except sqlite3.Error as error:
-        print("Failed to connect and insert data", error)
+        conn = create_connection()
 
-
-def insert_ingredients(ingredientList):
-    """
-    input: a list of tuples [(id, ingredient_name), (), ()]
-    output: populates the ingredients db with ingredients
-    """
-    try:
-        conn = create_connection("recipes.db")
-        cur = conn.cursor()
-
-        query = """ INSERT INTO ingredients 
-                            (id, ingredient_name)
+        recipe_query = """INSERT INTO recipes 
+                            (recipe_name, instructions)
                             VALUES 
                             (?, ?);"""
-        # repeatedly executes the query until the list has ended and id/ing pairs are inserted
-        cur.executemany(query, ingredientList)
-        conn.commit() 
-        print(f"{cur.rowcount} ingredients inserted successfully")
-        cur.close()
-        if conn:
-            conn.close()
-            print("the connection is closed.")
-            # adds the new ingredient to the inglist
-            inglist_add(ingredientList)
-    except sqlite3.Error as error:
+        
+        id = execute_query(conn, recipe_query)
+        conn.commit()
+        print(f"The recipe for {recipe} was inserted successfully")
+
+        to_insert = []
+        for item in ingredients_quantities:
+            to_insert.append({'id': id, 
+                            'ing' : item,
+                            'quan' : ingredients_quantities[item]})
+
+        rec_ing_quan_query = """INSERT INTO rec_ing_quan
+                                (recipe_id, ingredient, quantity)
+                                VALUES
+                                (:id, :ing, :quan);"""
+        
+        execute_query(conn, rec_ing_quan_query, to_insert)
+        conn.commit()
+        print(f"The ingredients for {recipe} were inserted successfully.")
+        conn.close()
+        print("the connection is closed.")
+    except Error as error:
         print("Failed to connect and insert data", error)
 
 
-def insert_ingrecipe(ingrecipeList):
-    """
-    input: a list of tuples (recipe_id, ingredient_id, quantity)
-    output: populates the recipes db with recipe
-    """
-    try:
-        conn = create_connection("recipes.db")
-        cur = conn.cursor()
+# def insert_ingredients(ingredientList):
+#     """
+#     input: a list of tuples [(id, ingredient_name), (), ()]
+#     output: populates the ingredients db with ingredients
+#     """
+#     try:
+#         conn = create_connection("recipes.db")
+#         cur = conn.cursor()
 
-        ingrecipe_query = """ INSERT INTO ingrecipe 
-                            (recipe_id, ingredient_id, quantity)
-                            VALUES 
-                            (?, ?, ?);"""
-        # repeatedly inserts the query until the list of (recid, ingid, quant) is exhausted
-        cur.executemany(ingrecipe_query, ingrecipeList)
-        conn.commit() 
-        print(f"{cur.rowcount} ingrecipes inserted successfully")
-        cur.close()
-        if conn:
-            conn.close()
-            print("the connection is closed.")
-    except sqlite3.Error as error:
-        print("Failed to connect and insert data", error)
+#         query = """ INSERT INTO ingredients 
+#                             (id, ingredient_name)
+#                             VALUES 
+#                             (?, ?);"""
+#         # repeatedly executes the query until the list has ended and id/ing pairs are inserted
+#         cur.executemany(query, ingredientList)
+#         conn.commit() 
+#         print(f"{cur.rowcount} ingredients inserted successfully")
+#         cur.close()
+#         if conn:
+#             conn.close()
+#             print("the connection is closed.")
+#             # adds the new ingredient to the inglist
+#             inglist_add(ingredientList)
+#     except sqlite3.Error as error:
+#         print("Failed to connect and insert data", error)
+
+
+# def insert_ingrecipe(ingrecipeList):
+#     """
+#     input: a list of tuples (recipe_id, ingredient_id, quantity)
+#     output: populates the recipes db with recipe
+#     """
+#     try:
+#         conn = create_connection("recipes.db")
+#         cur = conn.cursor()
+
+#         ingrecipe_query = """ INSERT INTO ingrecipe 
+#                             (recipe_id, ingredient_id, quantity)
+#                             VALUES 
+#                             (?, ?, ?);"""
+#         # repeatedly inserts the query until the list of (recid, ingid, quant) is exhausted
+#         cur.executemany(ingrecipe_query, ingrecipeList)
+#         conn.commit() 
+#         print(f"{cur.rowcount} ingrecipes inserted successfully")
+#         cur.close()
+#         if conn:
+#             conn.close()
+#             print("the connection is closed.")
+#     except sqlite3.Error as error:
+#         print("Failed to connect and insert data", error)
 
 
 def is_recipe_duplicate(name):
