@@ -1,6 +1,6 @@
 # Plan
 
-Local program for favorite recipes
+Put in a check for whether the db and tables have actually been constructed first in your free time
 
 ### Functionality:
 
