@@ -299,54 +299,7 @@ def not_in_stock(full_recipe):
 
     stock = stocklist()
 
-<<<<<<< HEAD
     stock = np.array(stock)
     rec = np.array(rec)
     
     return np.setdiff1d(rec, stock).tolist()
-=======
-def add_new_recipe(recipe_name, instructions, ingredients):
-    """
-    input: string recipe_name, string instructions, dictionary of 
-    ingredients with associated quantities
-    Checks for duplicate recipe and ingredients with is_duplicate_?
-    assigns an id to recipe and each ingredient that is at least 
-    one more than the greatest id using greatest_id
-    Adds respective data points to the db
-    """
-    inglist = []
-    ingreclist = []
-    # finds the last id or 0 if table is empty, then add 1 to provide the next id
-    if greatest_ids():
-        start_ids = greatest_ids()
-        rec = start_ids[0] + 1
-        ing = start_ids[1] + 1
-    else:
-        print("Something went wrong with greatest ids.")
-        return "something went wrong with greatest ids."
-    # Checks if the recipe is already here before inserting id, name and instructions
-    if is_recipe_duplicate(recipe_name) == False: 
-        insrec = (rec, recipe_name, instructions)
-        insert_recipe(insrec)
-    # If it is a duplicate, the process doesn't continue and it prints a message
-    elif is_recipe_duplicate == True: 
-        print("This recipe already exists")
-        return "This recipe already exists."
-    # Checks through the ingredient/quantity dictionary for duplicates; if none, it adds
-    # the new ingredient id and the name to the ing list of tuples for population
-    for i in ingredients: 
-        if is_ingredient_duplicate(i) == False:
-            inglist.append((ing, i))
-            ingreclist.append((rec, ing, ingredients[i]))
-            ing += 1
-        else:
-            # finds the duplicate ingredient id, forgoes adding to ingredients_list(already there)
-            # populate a list of tuples with recipe id, the duplicate ing id,
-            # and quantity to pass into the ingrecipe table
-            x = find_ingredient_id(i)
-            ingreclist.append((rec, x, ingredients[i]))
-    insert_ingredients(inglist)
-    insert_ingrecipe(ingreclist)
-   
-   
->>>>>>> 5b56c6f418cd6aa90dc4fe364dc338689fde97b7
