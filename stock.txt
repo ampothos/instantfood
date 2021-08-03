@@ -37,9 +37,6 @@ squash
 salt
 breadcrumbs
 salmon
-<<<<<<< HEAD
 chili
 cumin
 bacon
-=======
->>>>>>> 5b56c6f418cd6aa90dc4fe364dc338689fde97b7
