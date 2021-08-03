@@ -1,27 +1,24 @@
-from foodfuncs import *
-import sqlite3
+import foodfuncs as ff
+import utils as u
 
 
-ifrec = input("Would you like to add another favorite recipe? Please type \'y\' or \'n\':  ")
-if ifrec == 'y':
-    recname = input("Please enter the name of your recipe:  ")
-    instruct = input("Please type the instructions for your recipe:  ")
-    ingdict = {}
-    ingr = ''
-    while ingr != 'x':
-        ingr = input("Enter the ingredient name. If there are no more ingredients, enter 'x' :  ") 
-        amt = input("Enter the amount of the ingredient as used in your recipe:  ")
-        if ingr != 'x' and ingr != 'X':
-            ingdict[ingr.lower()] = amt.lower()
-    print(f"Are these ingredients and amounts correct for your {recname} recipe?")
-    for x in ingdict:
-        print(x, ":", ingdict[x])
-    add_new_recipe(recname, instruct, ingdict)
-elif ifrec == 'n':
-    pick = input("Would you like a random recipe?")
+ifrec = input("Would you like to add another favorite recipe? Please type \'yes\' or \'no\':  ")
+if ifrec.lower() == 'yes':
+    u.new_recipe_prompt()
+elif ifrec.lower() == 'no':
+    max_oos = int(input("What is your maximum acceptable number of out-of-stock ingredients?  "))
+    pick = u.pick_and_check(max_oos)
+    if pick:
+        print(f"\nRecipe: {pick['recipe']}\n")
+        print(f"Difficulty: {pick['difficulty']}\n\nIngredients: ")
+        for item in pick['ingredients']:
+            print(item, " : ", pick['ingredients'][item])
+        print(f"\nInstructions: {pick['instructions']}")
+        print(f"Out of Stock: {', '.join(pick['out of stock'])}")
+
 else:
     print("You did not enter \'y\' or \'n\'. Try again.")
-#  this should be a while loop instead
+    exit()
+   
+   
 
-   
-   

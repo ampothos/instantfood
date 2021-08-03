@@ -37,3 +37,6 @@ squash
 salt
 breadcrumbs
 salmon
+chili
+cumin
+bacon
